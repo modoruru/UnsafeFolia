@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: justlofe <lofikpc@gmail.com>
+Date: Wed, 22 Jul 2026 10:51:02 +0700
+Subject: [PATCH] Make sure reload will finish no matter what
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 6f13870a1b463049dd37cf1c65d0bdecfc35b5c4..a8928d1b8778189f32ebc11a9f4a89dff684cb68 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -2422,7 +2422,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                     .filter(Objects::nonNull)
+                     .map(Pack::open)
+                     .collect(ImmutableList.toImmutableList()),
+-                this
++                server.asyncScheduler.executors
+             )
+             .thenCompose(
+                 packsToLoad -> {
+@@ -2436,7 +2436,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                             this.isDedicatedServer() ? Commands.CommandSelection.DEDICATED : Commands.CommandSelection.INTEGRATED,
+                             this.getFunctionCompilationPermissions(),
+                             this.executor,
+-                            this
++                            server.asyncScheduler.executors
+                         )
+                         .whenComplete((unit, throwable) -> {
+                             if (throwable != null) {
+@@ -2456,7 +2456,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                 this.resources.managers.updateComponentsAndStaticRegistryTags();
+                 this.resources.managers.getRecipeManager().finalizeRecipeLoading(this.worldData.enabledFeatures());
+                 this.potionBrewing = this.potionBrewing.reload(this.worldData.enabledFeatures()); // Paper - Custom Potion Mixes
+-                if (Thread.currentThread() != this.serverThread) return; // Paper
++                // if (Thread.currentThread() != this.serverThread) return; // Paper
+                 // Paper start - we don't need to save everything, just advancements
+                 // this.getPlayerList().saveAll();
+                 for (final ServerPlayer player : this.getPlayerList().getPlayers()) {
+@@ -2478,10 +2478,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                 this.server.syncCommands(); // Refresh commands after event
+                 // Paper end
+                 new io.papermc.paper.event.server.ServerResourcesReloadedEvent(cause).callEvent(); // Paper - Add ServerResourcesReloadedEvent; fire after everything has been reloaded
+-            }, this);
+-        if (this.isSameThread()) {
+-            this.managedBlock(result::isDone);
+-        }
++            }, server.asyncScheduler.executors);
++
++        // if (this.isSameThread()) {
++        //     this.managedBlock(result::isDone);
++        // }
+ 
+         return result;
+     }
