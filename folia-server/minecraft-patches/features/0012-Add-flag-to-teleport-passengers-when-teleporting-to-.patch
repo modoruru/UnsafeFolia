@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: justlofe <lofikpc@gmail.com>
+Date: Fri, 31 Jul 2026 17:51:33 +0700
+Subject: [PATCH] Add flag to teleport passengers when teleporting to entity
+ using /teleport commands
+
+
+diff --git a/net/minecraft/server/commands/TeleportCommand.java b/net/minecraft/server/commands/TeleportCommand.java
+index 13d7965fd4f99f0848b080349df41f8b1c31a19b..7d1159a7c80efaffb6ee1691db6b2cbf031b3b60 100644
+--- a/net/minecraft/server/commands/TeleportCommand.java
++++ b/net/minecraft/server/commands/TeleportCommand.java
+@@ -150,7 +150,7 @@ public class TeleportCommand {
+ 
+     private static int teleportToEntity(final CommandSourceStack source, final Collection<? extends Entity> entities, final Entity destination) throws CommandSyntaxException {
+         for (Entity entity : entities) {
+-            io.papermc.paper.threadedregions.TeleportUtils.teleport(entity, false, destination, Float.valueOf(destination.getYRot()), Float.valueOf(destination.getXRot()), Entity.TELEPORT_FLAG_LOAD_CHUNK, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND, null); // Folia - region threading
++            io.papermc.paper.threadedregions.TeleportUtils.teleport(entity, false, destination, Float.valueOf(destination.getYRot()), Float.valueOf(destination.getXRot()), Entity.TELEPORT_FLAG_LOAD_CHUNK | Entity.TELEPORT_FLAG_TELEPORT_PASSENGERS, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND, null); // Folia - region threading
+         }
+ 
+         if (entities.size() == 1) {
